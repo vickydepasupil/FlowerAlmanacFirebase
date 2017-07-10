@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "874473893808",
+    "firebase_url": "https://floweralmanacfirebase.firebaseio.com",
+    "project_id": "floweralmanacfirebase",
+    "storage_bucket": "floweralmanacfirebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874473893808:android:2f28042b1cc301ca",
+        "android_client_info": {
+          "package_name": "ph.edu.up.floweralmanacfirebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "874473893808-6e1luu31d7n3p2pe7cah3914ac0r16jh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ph.edu.up.floweralmanacfirebase",
+            "certificate_hash": "c03ad2fe8b4b5d52ede0d35bdd03bb7d5c92af34"
+          }
+        },
+        {
+          "client_id": "874473893808-rbcmp0qnil2atavejptsau7scv745ah7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxzYJj-YItkt-O0Pe-r-LkiXqU7Ao4EDo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "874473893808-rbcmp0qnil2atavejptsau7scv745ah7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
