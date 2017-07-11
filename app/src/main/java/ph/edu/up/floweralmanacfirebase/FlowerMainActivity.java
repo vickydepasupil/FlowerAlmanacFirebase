@@ -1,8 +1,10 @@
 package ph.edu.up.floweralmanacfirebase;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -19,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,12 +35,14 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 public class FlowerMainActivity extends AppCompatActivity {
@@ -60,6 +65,7 @@ public class FlowerMainActivity extends AppCompatActivity {
     public static final int VIEW = 2;
     public static final int ADD = 3;
 
+    public static  boolean alreadyEnabled;
     public static String uniqueKey = "";
     public final static String NAMEFLOWER = "ph.edu.up.flowermainactivity.NAMEFLOWER";
     public final static String EASEFLOWER = "ph.edu.up.flowermainactivity.EASEFLOWER";
@@ -77,11 +83,22 @@ public class FlowerMainActivity extends AppCompatActivity {
 
         listView =(ListView) findViewById(R.id.layout_main);
 
+        try {
+            if (!alreadyEnabled) {
+                //Enable offline access to database
+                FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+                alreadyEnabled = true;
+            }
+        } catch (Exception ex) {}
+
         mDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         mStorage = FirebaseStorage.getInstance();
 
         mReference = mDatabase.getReference().child("flowers");
+
+        //Keeps app synced
+        mReference.keepSynced(true);
         mStorageReference = mStorage.getReference().child("flower_photos");
 
         /*showMessage();*/
@@ -142,6 +159,11 @@ public class FlowerMainActivity extends AppCompatActivity {
                 }
             }
         };
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 
     @Override
@@ -209,6 +231,9 @@ public class FlowerMainActivity extends AppCompatActivity {
 
             if (!saveKey.isEmpty() && !saveKey.equals("")) { //Updating information
 
+                Log.e("SENDER 1:", photoUrl);
+                Log.e("SENDER 2:", path);
+
                 if (!path.equals("") && !path.isEmpty()) { // Replacing old photo
                     if (photoUrl.equals("dummyData")) { // NO Photo previously uploaded
                         //Uploads new photo
@@ -254,30 +279,6 @@ public class FlowerMainActivity extends AppCompatActivity {
                                 Toast.makeText(getApplicationContext(), "Changes saved", Toast.LENGTH_LONG).show();
                             }
                         });
-
-                    /*if (photoUrl.equals("dummyData")) { //No photo previously uploaded
-
-                        Log.e("SENDER 1", saveKey);
-
-                        Flower flower = new Flower(mUsername, flowerName, saveEase, saveInst, "dummyData", saveKey);
-                        mReference.child(saveKey).setValue(flower, new DatabaseReference.CompletionListener() {
-                            @Override
-                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                Toast.makeText(getApplicationContext(), "Changes saved", Toast.LENGTH_LONG).show();
-                            }
-                        });
-
-                    } else { //EXISTING photo (uploaded previously)
-
-                        Flower flower = new Flower(mUsername, flowerName, saveEase, saveInst, photoUrl, saveKey);
-                        mReference.child(saveKey).setValue(flower, new DatabaseReference.CompletionListener() {
-                            @Override
-                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                Toast.makeText(getApplicationContext(), "Changes saved", Toast.LENGTH_LONG).show();
-                            }
-                        });
-
-                    }*/
                 }
             } else {
                 //Saving new flower
@@ -430,18 +431,43 @@ public class FlowerMainActivity extends AppCompatActivity {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                     Flower flower = dataSnapshot.getValue(Flower.class);
-                    flowerAdapter.add(flower);
+                    if (!flower.getPostKey().equals("dummyData")) {
+                        flowerAdapter.add(flower);
+                    } else {
+                        mReference.child(flower.getPostKey()).removeValue();
+                    }
                 }
 
                 @Override
                 public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                    /*Flower flower = dataSnapshot.getValue(Flower.class);*/
+                    String key = dataSnapshot.getKey();
+                    int position = 0;
 
-                    /*mReference.orderByChild("postKey").equalTo(flower.getPostKey());
-                    int index = flowerAdapter.getPosition(flower);*/
+                    Iterator<Flower> iterator = flowerArrayList.iterator();
+                    while (iterator.hasNext()) {
+                        Flower flower = iterator.next();
+                        if (key.equals(flower.getPostKey())) {
+                            position = flowerAdapter.getPosition(flower);
+                            iterator.remove();
+                        }
+                    }
+                    Flower flowerNew = dataSnapshot.getValue(Flower.class);
+                    flowerAdapter.insert(flowerNew, position);
+                    flowerAdapter.notifyDataSetChanged();
                 }
                 @Override
-                public void onChildRemoved(DataSnapshot dataSnapshot) {}
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                    String key = dataSnapshot.getKey();
+
+                    Iterator<Flower> iterator = flowerArrayList.iterator();
+                    while (iterator.hasNext()) {
+                        Flower flower = iterator.next();
+                        if (key.equals(flower.getPostKey())) {
+                            iterator.remove();
+                            flowerAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
                 @Override
                 public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
                 @Override

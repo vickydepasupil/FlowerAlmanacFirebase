@@ -58,8 +58,6 @@ public class ViewActivity extends AppCompatActivity {
 
         ImageView imageView = (ImageView) findViewById(R.id.image);
 
-        Log.e("SENDER", urlFlower);
-
         if (urlFlower.equals("dummyData")) {
             if (easeFlower.equals("Easy")) {
                 imageView.setImageResource(R.mipmap.inspired);

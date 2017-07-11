@@ -345,14 +345,4 @@ public class AddActivity extends AppCompatActivity {
             ne.printStackTrace();
         }
     }
-
-    public String checkRev(TextView view) {
-        String rev = "";
-
-        try {
-            rev = view.getText().toString();
-        } catch (NullPointerException ne) { }
-
-        return rev;
-    }
 }
