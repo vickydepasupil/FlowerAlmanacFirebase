@@ -4,11 +4,13 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -16,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -43,12 +46,15 @@ public class AddActivity extends AppCompatActivity {
     public final static String KEY = "ph.edu.up.addactivity.KEY";
     public final static String URL = "ph.edu.up.addactivity.URL";
     public final static String PATH = "ph.edu.up.addactivity.PATH";
+    public final static String DEL = "ph.edu.up.addactivity.DEL";
 
     public static String userChoice = "";
     public static Uri path = null;
 
     private static final int REQUEST_CAMERA = 5;
     private static final int SELECT_FILE = 6;
+
+    private Button button1;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -66,7 +72,6 @@ public class AddActivity extends AppCompatActivity {
                 saveChanges();
                 return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -84,13 +89,19 @@ public class AddActivity extends AppCompatActivity {
             }
         });
 
-        /*Button button1 = (Button) findViewById(R.id.clear_button);
+        //Makes sure that only on button click
+        TextView deleteField = (TextView) findViewById(R.id.deletePhoto);
+        deleteField.setText("");
+
+        button1 = (Button) findViewById(R.id.clear_button);
+        button1.setVisibility(View.INVISIBLE);
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 removePhoto();
             }
-        });*/
+        });
+
         path = null;
 
         Intent intent1 = getIntent();
@@ -128,6 +139,8 @@ public class AddActivity extends AppCompatActivity {
             ImageView imageView = (ImageView) findViewById(R.id.photoView);
 
             if (!urlFlower.equals("dummyData")) {
+                button1.setVisibility(View.VISIBLE);
+                imageView.setDrawingCacheEnabled(true);
                 Glide.with(imageView.getContext())
                         .load(urlFlower)
                         .into(imageView);
@@ -152,6 +165,9 @@ public class AddActivity extends AppCompatActivity {
         TextView textView4 = (TextView) findViewById(R.id.urlField);
         String url = textView4.getText().toString();
 
+        TextView textView5 = (TextView) findViewById(R.id.deletePhoto);
+        String del = textView5.getText().toString();
+
         Intent intent = new Intent();
 
         if (fname.isEmpty() || fname.equals("")) {
@@ -171,6 +187,7 @@ public class AddActivity extends AppCompatActivity {
                     intent.putExtra(INST, inst);
                     intent.putExtra(PATH, path.toString());
                     intent.putExtra(URL, url);
+                    intent.putExtra(DEL, del);
 
                     setResult(Activity.RESULT_OK, intent);
 
@@ -182,6 +199,7 @@ public class AddActivity extends AppCompatActivity {
                     intent.putExtra(INST, inst);
                     intent.putExtra(PATH, "");
                     intent.putExtra(URL, url);
+                    intent.putExtra(DEL, del);
 
                     setResult(Activity.RESULT_OK, intent);
                 }
@@ -292,17 +310,19 @@ public class AddActivity extends AppCompatActivity {
         Bitmap bitmap = null;
 
         if (data != null) {
-            try {
-                bitmap = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
+            String wholeID = DocumentsContract.getDocumentId(data.getData());
+            String id = wholeID.split(":")[1];
+            Long origId = Long.parseLong(id);
 
-                path = data.getData();
+            bitmap = MediaStore.Images.Thumbnails.getThumbnail(getApplicationContext().getContentResolver(),
+                    origId, MediaStore.Images.Thumbnails.MINI_KIND, null);
 
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+            String imagePath = getThumbPath(origId);
+            path = Uri.fromFile(new File(imagePath));
         }
         ImageView imageView = (ImageView) findViewById(R.id.photoView);
         imageView.setImageBitmap(bitmap);
+        button1.setVisibility(View.VISIBLE);
     }
 
     private void onCaptureImageResult(Intent data) {
@@ -326,23 +346,50 @@ public class AddActivity extends AppCompatActivity {
         }
         ImageView imageView = (ImageView) findViewById(R.id.photoView);
         imageView.setImageBitmap(thumbnail);
+        button1.setVisibility(View.VISIBLE);
     }
 
     public void removePhoto() {
         ImageView imageView = (ImageView) findViewById(R.id.photoView);
-        TextView textView = (TextView) findViewById(R.id.urlField);
-
+        TextView textView = (TextView) findViewById(R.id.deletePhoto);
         try {
-            Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
-
+            Bitmap bitmap = imageView.getDrawingCache();
             if (bitmap != null) {
                 imageView.setImageBitmap(null);
                 imageView.setImageResource(R.drawable.flower);
-                textView.setText(null);
+                textView.setText("delete");
                 path = null;
+                button1.setVisibility(View.INVISIBLE);
+            } else {
+                Bitmap bit2 = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+                if (bit2 != null) {
+                    imageView.setImageBitmap(null);
+                    imageView.setImageResource(R.drawable.flower);
+                    textView.setText("delete");
+                    path = null;
+                    button1.setVisibility(View.INVISIBLE);
+                }
             }
-        } catch (NullPointerException ne) {
-            ne.printStackTrace();
+        } catch (NullPointerException ne) {}
+    }
+
+    String getThumbPath(long longId) {
+        Cursor thumbCursor = null;
+        try {
+            thumbCursor = getApplicationContext().getContentResolver().
+                    query(MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI, null,
+                             MediaStore.Images.Thumbnails.IMAGE_ID + " = " + longId+ " AND "
+                                    + MediaStore.Images.Thumbnails.KIND + " = "
+                                    + MediaStore.Images.Thumbnails.MINI_KIND , null, null);
+            if(thumbCursor.moveToFirst()) {
+                int dataIndex = thumbCursor.getColumnIndexOrThrow( MediaStore.MediaColumns.DATA );
+                return thumbCursor.getString(dataIndex);
+            }
+        } finally {
+            if(thumbCursor != null){
+                thumbCursor.close();
+            }
         }
+        return null;
     }
 }

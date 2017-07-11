@@ -1,10 +1,8 @@
 package ph.edu.up.floweralmanacfirebase;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -21,7 +19,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,13 +32,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -187,9 +182,7 @@ public class FlowerMainActivity extends AppCompatActivity {
             String saveKey = intent.getStringExtra(ViewActivity.KEY);
             String saveUrl = intent.getStringExtra(ViewActivity.URL);
 
-
             if (status.equals("true")) {
-
                 if (!saveUrl.equals("dummyData")) {
                     StorageReference photoRef = mStorage.getReferenceFromUrl(saveUrl);
                     photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -199,14 +192,12 @@ public class FlowerMainActivity extends AppCompatActivity {
                             }
                         });
                 }
-
                     mReference.child(saveKey).removeValue(new DatabaseReference.CompletionListener() {
                         @Override
                         public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                             Toast.makeText(getApplicationContext(), "Deleted", Toast.LENGTH_LONG).show();
                         }
                     });
-
             } else if (status.equals("false")) {
 
                 Intent intent1 = new Intent(FlowerMainActivity.this, AddActivity.class);
@@ -228,15 +219,15 @@ public class FlowerMainActivity extends AppCompatActivity {
             final String saveInst = intent.getStringExtra(AddActivity.INST);
             final String saveKey = intent.getStringExtra(AddActivity.KEY);
             final String photoUrl = intent.getStringExtra(AddActivity.URL);
+            final String delPhoto = intent.getStringExtra(AddActivity.DEL);
 
             if (!saveKey.isEmpty() && !saveKey.equals("")) { //Updating information
-
-                Log.e("SENDER 1:", photoUrl);
-                Log.e("SENDER 2:", path);
 
                 if (!path.equals("") && !path.isEmpty()) { // Replacing old photo
                     if (photoUrl.equals("dummyData")) { // NO Photo previously uploaded
                         //Uploads new photo
+                        Log.e("SENDER", "You got here!");
+
                         Uri imageUri = Uri.parse(path);
                         StorageReference imageRef = mStorageReference.child(imageUri.getLastPathSegment());
                         imageRef.putFile(imageUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -245,6 +236,7 @@ public class FlowerMainActivity extends AppCompatActivity {
                                     Flower flower = new Flower(mUsername, flowerName, saveEase, saveInst, downloadUri.toString(), saveKey);
                                     mReference.child(saveKey).setValue(flower);
                                     Toast.makeText(getApplicationContext(), "Changes saved", Toast.LENGTH_LONG).show();
+                                    Log.e("SENDER", "uploaded");
                                 }
                             });
                     } else {
@@ -270,15 +262,32 @@ public class FlowerMainActivity extends AppCompatActivity {
                     }
                 } else { // Path is empty, NO photo selected
 
-                    Log.e("SENDER", saveKey);
+                    if (delPhoto.equals("delete") && !photoUrl.equals("dummyData")) { // User wants to remove photo previously uploaded
+                        StorageReference photoRef = mStorage.getReferenceFromUrl(photoUrl);
+                        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d("SENDER", "Photo deleted.");
+                            }
+                        });
 
-                    Flower flower = new Flower(mUsername, flowerName, saveEase, saveInst, photoUrl, saveKey);
-                    mReference.child(saveKey).setValue(flower, new DatabaseReference.CompletionListener() {
+                        Flower flower = new Flower(mUsername, flowerName, saveEase, saveInst, "dummyData", saveKey);
+                        mReference.child(saveKey).setValue(flower, new DatabaseReference.CompletionListener() {
                             @Override
                             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                                 Toast.makeText(getApplicationContext(), "Changes saved", Toast.LENGTH_LONG).show();
                             }
                         });
+                    } else { // User update only affects the text fields
+
+                        Flower flower = new Flower(mUsername, flowerName, saveEase, saveInst, photoUrl, saveKey);
+                        mReference.child(saveKey).setValue(flower, new DatabaseReference.CompletionListener() {
+                            @Override
+                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                Toast.makeText(getApplicationContext(), "Changes saved", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
                 }
             } else {
                 //Saving new flower
@@ -365,13 +374,9 @@ public class FlowerMainActivity extends AppCompatActivity {
             });
 
 
-        } else {
-            return false;
-        }
-
+        } else { return false; }
         return true;
     }
-
 
     public void showMessage() {
 
