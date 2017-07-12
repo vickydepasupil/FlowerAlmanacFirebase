@@ -4,17 +4,25 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +34,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,7 +53,6 @@ import java.io.IOException;
  */
 
 public class AddActivity extends AppCompatActivity {
-    //TODO - Add remove photo via button click
 
     public final static String NAME = "ph.edu.up.addactivity.NAME";
     public final static String EASE = "ph.edu.up.addactivity.EASE";
@@ -53,6 +67,16 @@ public class AddActivity extends AppCompatActivity {
 
     private static final int REQUEST_CAMERA = 5;
     private static final int SELECT_FILE = 6;
+    public static final int INST_LENGTH_LIMIT = 325;
+
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mReference;
+    private TextView errorMessage;
+    private EditText editText1;
+    private ValueEventListener mListener;
+    private TextWatcher textWatcher;
+
+    public boolean exists;
 
     private Button button1;
 
@@ -60,6 +84,12 @@ public class AddActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_add, menu);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+        menu.findItem(R.id.save).setEnabled(!exists);
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -73,6 +103,19 @@ public class AddActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        editText1.getBackground().clearColorFilter();
+        errorMessage.setVisibility(View.INVISIBLE);
+        if (mListener != null) {
+            mReference.removeEventListener(mListener);
+        }
+        if (textWatcher != null) {
+            editText1.removeTextChangedListener(textWatcher);
+        }
     }
 
     @Override
@@ -104,9 +147,21 @@ public class AddActivity extends AppCompatActivity {
 
         path = null;
 
+        exists = false;
+
+        mDatabase = FirebaseDatabase.getInstance();
+        mReference = mDatabase.getReference().child("flowers");
+
+        editText1 = (EditText) findViewById(R.id.editName);
+        errorMessage = (TextView) findViewById(R.id.errorMessage);
+        errorMessage.setText("");
+
+        EditText editText2 = (EditText) findViewById(R.id.editInst);
+        editText2.setFilters(new InputFilter[]{new InputFilter.LengthFilter(INST_LENGTH_LIMIT)});
+
         Intent intent1 = getIntent();
 
-        String nameFlower = intent1.getStringExtra(FlowerMainActivity.NAMEFLOWER);
+        final String nameFlower = intent1.getStringExtra(FlowerMainActivity.NAMEFLOWER);
         String easeFlower = intent1.getStringExtra(FlowerMainActivity.EASEFLOWER);
         String instFlower = intent1.getStringExtra(FlowerMainActivity.INSTFLOWER);
         String keyFlower = intent1.getStringExtra(FlowerMainActivity.KEYFLOWER);
@@ -114,8 +169,40 @@ public class AddActivity extends AppCompatActivity {
 
         if (nameFlower != null && !nameFlower.isEmpty()) {
 
-            EditText editText1 = (EditText) findViewById(R.id.editName);
             editText1.setText(nameFlower);
+            textWatcher = new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    final String flowerName = charSequence.toString().trim();
+                    mListener = new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            for(DataSnapshot data: dataSnapshot.getChildren()){
+                                String name = data.child("flowerName").getValue().toString().toLowerCase();
+                                if (name.equals(flowerName.toLowerCase()) && !name.equals(nameFlower.toLowerCase())) {
+                                    editText1.getBackground().setColorFilter(Color.parseColor("#FF1744"), PorterDuff.Mode.SRC_IN);
+                                    errorMessage.setText(flowerName + " already exists");
+                                    exists = true;
+                                    break;
+                                } else {
+                                    editText1.getBackground().clearColorFilter();
+                                    errorMessage.setText("");
+                                    exists = false;
+                                }
+                            }
+                            invalidateOptionsMenu();
+                        }
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {}
+                    };
+                    mReference.addValueEventListener(mListener);
+                }
+                @Override
+                public void afterTextChanged(Editable editable) {}
+            };
+            editText1.addTextChangedListener(textWatcher);
 
             Spinner spinner = (Spinner) findViewById(R.id.editEase);
 
@@ -127,7 +214,6 @@ public class AddActivity extends AppCompatActivity {
                 spinner.setSelection(2);
             }
 
-            EditText editText2 = (EditText) findViewById(R.id.editInst);
             editText2.setText(instFlower);
 
             TextView textView1 = (TextView) findViewById(R.id.keyField);
@@ -145,6 +231,40 @@ public class AddActivity extends AppCompatActivity {
                         .load(urlFlower)
                         .into(imageView);
             }
+        } else {
+            textWatcher = new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+                @Override
+                public void onTextChanged(final CharSequence charSequence, int i, int i1, int i2) {}
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    final String flowerName = editable.toString().trim();
+                    mListener = new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            for(DataSnapshot data: dataSnapshot.getChildren()){
+                                String name = data.child("flowerName").getValue().toString().toLowerCase();
+                                if (name.equals(flowerName.toLowerCase())) {
+                                    editText1.getBackground().setColorFilter(Color.parseColor("#FF1744"), PorterDuff.Mode.SRC_IN);
+                                    errorMessage.setText(flowerName + " already exists");
+                                    exists = true;
+                                    break;
+                                } else {
+                                    editText1.getBackground().clearColorFilter();
+                                    errorMessage.setText("");
+                                    exists = false;
+                                }
+                            }
+                            invalidateOptionsMenu();
+                        }
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {}
+                    };
+                    mReference.addValueEventListener(mListener);
+                }
+            };
+            editText1.addTextChangedListener(textWatcher);
         }
     }
 
@@ -174,13 +294,10 @@ public class AddActivity extends AppCompatActivity {
             setResult(Activity.RESULT_CANCELED, intent);
             Toast.makeText(getApplicationContext(), "Blank item not saved", Toast.LENGTH_LONG).show();
             finish();
-
         } else {
-
             if (!key.equals("") || !key.isEmpty()) { // Update only, already has assigned key
 
                 try { // Photo for upload
-
                     intent.putExtra(KEY, key);
                     intent.putExtra(NAME, fname);
                     intent.putExtra(EASE, ease);
@@ -190,9 +307,7 @@ public class AddActivity extends AppCompatActivity {
                     intent.putExtra(DEL, del);
 
                     setResult(Activity.RESULT_OK, intent);
-
                 } catch (NullPointerException ne) { // No photo
-
                     intent.putExtra(KEY, key);
                     intent.putExtra(NAME, fname);
                     intent.putExtra(EASE, ease);
@@ -203,10 +318,8 @@ public class AddActivity extends AppCompatActivity {
 
                     setResult(Activity.RESULT_OK, intent);
                 }
-
                 path = null;
                 finish();
-
             } else { // Saving new flower item (NO key yet)
                 try { // Photo for upload
 
@@ -218,9 +331,7 @@ public class AddActivity extends AppCompatActivity {
                     intent.putExtra(URL, url);
 
                     setResult(Activity.RESULT_OK, intent);
-
                 } catch (NullPointerException ne) { // No photo
-
                     intent.putExtra(KEY, "");
                     intent.putExtra(NAME, fname);
                     intent.putExtra(EASE, ease);
@@ -229,7 +340,6 @@ public class AddActivity extends AppCompatActivity {
                     intent.putExtra(URL, url);
 
                     setResult(Activity.RESULT_OK, intent);
-
                 }
                 path = null;
                 finish();
@@ -305,7 +415,6 @@ public class AddActivity extends AppCompatActivity {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private void onSelectFromGalleryResult(Intent data) {
         Bitmap bitmap = null;
 

@@ -2,6 +2,7 @@ package ph.edu.up.floweralmanacfirebase;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -31,6 +32,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -55,13 +57,13 @@ public class FlowerMainActivity extends AppCompatActivity {
     private FirebaseStorage mStorage;
     private StorageReference mStorageReference;
 
-    public static int CHILDREN_COUNT = 0;
     public static final int RC_SIGN_IN = 1;
     public static final int VIEW = 2;
     public static final int ADD = 3;
 
     public static  boolean alreadyEnabled;
     public static String uniqueKey = "";
+
     public final static String NAMEFLOWER = "ph.edu.up.flowermainactivity.NAMEFLOWER";
     public final static String EASEFLOWER = "ph.edu.up.flowermainactivity.EASEFLOWER";
     public final static String INSTFLOWER = "ph.edu.up.flowermainactivity.INSTFLOWER";
@@ -376,31 +378,6 @@ public class FlowerMainActivity extends AppCompatActivity {
 
         } else { return false; }
         return true;
-    }
-
-    public void showMessage() {
-
-        if (CHILDREN_COUNT != 0) {
-            try {
-                TextView textView = (TextView) findViewById((R.id.temporary_textView));
-                if (textView != null) {
-                    LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linear_main);
-                    linearLayout.removeView(textView);
-                }
-            } catch (Exception e) {}
-        } else {
-            LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linear_main);
-
-            TextView textView = new TextView(FlowerMainActivity.this);
-            textView.setText("No flowers saved yet.");
-            textView.setId(R.id.temporary_textView);
-            textView.setTextSize(16);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-            params.gravity = Gravity.CENTER;
-            textView.setLayoutParams(params);
-            textView.setGravity(Gravity.CENTER);
-            linearLayout.addView(textView);
-        }
     }
 
     @Override

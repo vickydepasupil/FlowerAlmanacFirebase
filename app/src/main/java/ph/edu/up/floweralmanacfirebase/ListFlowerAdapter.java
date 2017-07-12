@@ -23,6 +23,10 @@ public class ListFlowerAdapter extends ArrayAdapter<Flower> {
         super(context, resources, objects);
     }
 
+    public int getCount() {
+        return super.getCount();
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
