@@ -1,8 +1,10 @@
 package ph.edu.up.floweralmanacfirebase;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -113,7 +115,8 @@ public class ViewActivity extends AppCompatActivity {
             return true;
 
         } else if (id == R.id.action_delete) {
-            Intent intent = new Intent();
+
+            final Intent intent = new Intent();
 
             TextView textView = (TextView) findViewById(R.id.flowerName);
             String name = textView.getText().toString();
@@ -137,11 +140,27 @@ public class ViewActivity extends AppCompatActivity {
             intent.putExtra(URL, urlFlower);
             intent.putExtra(DEL, "true");
 
-            setResult(Activity.RESULT_OK, intent);
-            finish();
-            return true;
+            AlertDialog.Builder builder = new AlertDialog.Builder(ViewActivity.this);
+            builder.setCancelable(true);
+            builder.setTitle("Delete");
+            builder.setMessage(name + " will be removed from your flower list. Continue?");
+            builder.setPositiveButton("Delete",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            setResult(Activity.RESULT_OK, intent);
+                            finish();
+                        }
+                    });
+            builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            builder.show();
+            return false;
         }
-
         return super.onOptionsItemSelected(item);
     }
 

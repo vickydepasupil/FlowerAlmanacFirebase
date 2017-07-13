@@ -1,12 +1,14 @@
 package ph.edu.up.floweralmanacfirebase;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -356,26 +358,40 @@ public class FlowerMainActivity extends AppCompatActivity {
 
         } else if (item.getTitle() == "Delete") {
             AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-            Flower flower = (Flower) flowerAdapter.getItem(info.position);
+            final Flower flower = (Flower) flowerAdapter.getItem(info.position);
 
-            if (!flower.getPhotoUrl().equals("dummyData")) {
-                StorageReference photoRef = mStorage.getReferenceFromUrl(flower.getPhotoUrl());
-                photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("SENDER", "Photo deleted.");
-                    }
-                });
-            }
-
-            mReference.child(flower.getPostKey()).removeValue(new DatabaseReference.CompletionListener() {
+            AlertDialog.Builder builder = new AlertDialog.Builder(FlowerMainActivity.this);
+            builder.setCancelable(true);
+            builder.setTitle("Delete");
+            builder.setMessage(flower.getFlowerName() + " will be removed from your flower list. Continue?");
+            builder.setPositiveButton("Delete",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (!flower.getPhotoUrl().equals("dummyData")) {
+                                StorageReference photoRef = mStorage.getReferenceFromUrl(flower.getPhotoUrl());
+                                photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Log.d("SENDER", "Photo deleted.");
+                                    }
+                                });
+                            }
+                            mReference.child(flower.getPostKey()).removeValue(new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    Toast.makeText(getApplicationContext(), "Deleted", Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        }
+                    });
+            builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                 @Override
-                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                    Toast.makeText(getApplicationContext(), "Deleted", Toast.LENGTH_LONG).show();
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
                 }
             });
-
-
+            builder.show();
         } else { return false; }
         return true;
     }
