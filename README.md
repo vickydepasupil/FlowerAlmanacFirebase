@@ -3,7 +3,7 @@
 
 A gardening tool app allowing users to add, view, edit and delete information on planting flowers.
 Users may rate a flower's ease of planting and provide helpful tips on how to grow a specific flower.
-Users may also choose to attach a photo of the flower taken by camera, or via gallery submission.
+Users may also choose to attach a photo of the flower taken by camera, or via gallery submission. To save bandwidth, system-generated thumbnails of gallery photos are retrieved and uploaded in place of the actual file. Photos taken by camera are compressed as well.
 
 <div>
 <h4>Login page using Firebase UI</h4>
