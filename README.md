@@ -25,8 +25,10 @@ Users may also choose to attach a photo of the flower taken by camera, or via ga
 
 <div>
 <h4 style="float:right; display:inline-block;">Add and Edit Page</h4>
+<img src="https://user-images.githubusercontent.com/29102307/28215405-808d44c6-68e0-11e7-8980-4dda82661088.png" width="250">
 <img src="https://user-images.githubusercontent.com/29102307/28212307-601b1ebe-68d3-11e7-803f-ac2c406e1087.png" width="250">
-<p>Photos may be added via camera or gallery submission.</p>
+<p>By default, flowers are assigned icons according to their ease of planting.</p>
+<p>Users may choose to add a photo instead, via camera or gallery submission.</p>
 </div>
 
 <div>
