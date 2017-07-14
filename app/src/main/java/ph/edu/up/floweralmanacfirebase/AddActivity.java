@@ -44,10 +44,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-/**
- * Created by victo on 7/11/2017.
- */
-
 public class AddActivity extends AppCompatActivity {
 
     public final static String NAME = "ph.edu.up.addactivity.NAME";

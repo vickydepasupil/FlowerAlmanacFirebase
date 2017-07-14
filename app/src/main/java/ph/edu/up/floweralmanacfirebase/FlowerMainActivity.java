@@ -161,9 +161,7 @@ public class FlowerMainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
-        finish();
-    }
+    public void onBackPressed() { finish(); }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -363,8 +361,8 @@ public class FlowerMainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(FlowerMainActivity.this);
             builder.setCancelable(true);
             builder.setTitle("Delete");
-            builder.setMessage(flower.getFlowerName() + " will be removed from your flower list. Continue?");
-            builder.setPositiveButton("Delete",
+            builder.setMessage("Remove "+ flower.getFlowerName() + " from your list?");
+            builder.setPositiveButton("YES",
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -385,7 +383,7 @@ public class FlowerMainActivity extends AppCompatActivity {
                             });
                         }
                     });
-            builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.dismiss();
@@ -493,8 +491,24 @@ public class FlowerMainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.sign_out_menu:
-                AuthUI.getInstance().signOut(this);
-                return true;
+                AlertDialog.Builder builder = new AlertDialog.Builder(FlowerMainActivity.this);
+                builder.setCancelable(true);
+                builder.setMessage("Sign out of Flower Almanac?");
+                builder.setPositiveButton("YES",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                AuthUI.getInstance().signOut(FlowerMainActivity.this);
+                            }
+                        });
+                builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                builder.show();
+                return false;
             default:
                 return super.onOptionsItemSelected(item);
         }

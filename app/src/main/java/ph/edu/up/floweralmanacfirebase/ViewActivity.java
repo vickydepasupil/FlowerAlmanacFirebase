@@ -13,10 +13,6 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-/**
- * Created by victo on 7/11/2017.
- */
-
 public class ViewActivity extends AppCompatActivity {
     //Incorporate post to FB feature - another oAuth
 
@@ -143,8 +139,8 @@ public class ViewActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(ViewActivity.this);
             builder.setCancelable(true);
             builder.setTitle("Delete");
-            builder.setMessage(name + " will be removed from your flower list. Continue?");
-            builder.setPositiveButton("Delete",
+            builder.setMessage("Remove "+ name +" from your list?");
+            builder.setPositiveButton("YES",
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -152,7 +148,7 @@ public class ViewActivity extends AppCompatActivity {
                             finish();
                         }
                     });
-            builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.dismiss();
@@ -166,8 +162,6 @@ public class ViewActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(ViewActivity.this, FlowerMainActivity.class);
-        startActivity(intent);
-        finish();
+        super.onBackPressed();
     }
 }
