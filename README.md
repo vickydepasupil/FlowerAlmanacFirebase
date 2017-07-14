@@ -34,7 +34,8 @@ Users may also choose to attach a photo of the flower taken by camera, or via ga
 <div>
 <h4>Add and Edit Page</h4>
 <img src="https://user-images.githubusercontent.com/29102307/28212299-5f2c153a-68d3-11e7-99b0-1f8cc9a40b1e.png" width="250">
-<p>Users have the option to replace or remove photos after attaching them, by clicking on the white clear button. Photos may be removed even after saving the item, as part of the edit feature. If a photo is removed in the edit page, saving changes will prompt the app to <b>delete the photo from the Firebase Storage</b> as well.</p>
+<p>Users have the option to replace or remove photos after attaching them, by clicking on the white clear button. This button only appears if a flower item has an attached photo.</p>
+<p>Photos may be removed even after saving the item, as part of the edit feature. If a photo is removed in the edit page, saving changes will prompt the app to <b>delete the photo from the Firebase Storage</b> as well.</p>
 <img src="https://user-images.githubusercontent.com/29102307/28212306-5fb119d8-68d3-11e7-8348-6755dfd96983.png" width="250">
 <p>Adding, editing, or deleting flowers in the list will refresh the main page to reflect these changes.</p>
 </div>
