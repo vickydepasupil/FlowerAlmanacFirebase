@@ -56,6 +56,6 @@ Users may also choose to attach a photo of the flower taken by camera, or via ga
 
 <div>
 <h4>Signing Out</h4>
-<p>Users may sign out of the application from the main page, by clicking on the power button. This is located in the action toolbar, at the upper right corner of the screen. A sign out confirmation is asked before proceeidng.</p>
+<p>Users may sign out of the application from the main page, by clicking on the power button. This is located in the action toolbar, at the upper right corner of the screen. A sign out confirmation is asked before proceeding.</p>
 <img src="https://user-images.githubusercontent.com/29102307/28214402-b1f5656a-68dc-11e7-9ca9-25febc7fbffa.png" width="250">
 </div>
